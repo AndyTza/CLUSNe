@@ -71,7 +71,7 @@ def download_marshall_spectra(user, passw, start_date, end_date, date_dir_name):
 
     return (program_targets)
 
-def fetch_ZTF_spectrum(target_id, user, passw, specfilter=True):
+def fetch_ZTF_spectrum(target_id, user, passw, specfilter=False, program_idx=0):
     """Returns list of all available spectra(data url paths) for a given ZTF target.
 
     Input
@@ -87,7 +87,7 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=True):
     list_spec: List of download paths (from marshall) in format: spectra/data/ZTFid_date_inst_vn.ascii (list)
     """
 
-    programidx = 0 # CLU
+    programidx = program_idx # CLU:0
     r = requests.post('http://skipper.caltech.edu:8080/cgi-bin/growth/list_program_sources.cgi', auth=(user, passw), data = {'programidx': str(programidx)})
     sources_clu = json.loads(r.text) # preliminary information on CLU objects
     list_spec, sd, dat_url, dat_inst = [], [], [], []
@@ -95,7 +95,7 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=True):
     for i in enumerate(sources_clu):
         name = i[1]['name'] # name generated from marshall
 
-        if name == target_id:
+        if name == target_id: # if you find the ZTF_id you have queried
             marsh_info = i[1] # fetch marshall information!
             s = requests.post('http://skipper.caltech.edu:8080/cgi-bin/growth/source_summary.cgi', auth=(user, passw), data = {'sourceid': str(marsh_info['id'])})
             sourceDict = json.loads(s.text)
@@ -104,20 +104,14 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=True):
             spec = sourceDict['uploaded_spectra'] # information on spectroscopy
             photometry_info = sourceDict['uploaded_photometry'] # information on photometry
 
-            completed = open("completed_list_07262019a.txt", 'r')
-            names_ZTF = completed.read().split(" ") # names of the ZTF_ids that have been completed
-            names_ZTF = np.asanyarray(names_ZTF)
-            in_names = np.isin(str(target_id), names_ZTF)
-
-            if in_names==True:
-                print ("Source has already been commented on the Marshal.. Moving to next source...")
-                return (None)
-            elif in_names==False:
-                pass
-
             N_spec = len(spec) # number of available spectra! -- check for uniqueness? [NOTE!]
 
-            if specfilter==True:
+            if specfilter==False: # Download all available spectra!
+                for spectra_path in spec:
+                    list_spec.append(str(spectra_path['datapath'])) # append datapaths...
+                return (list_spec)
+
+            elif specfilter==True:
                 if N_spec==0:
                     # empty spectrum!
                     print ("Found empty spectrum!")
@@ -181,12 +175,6 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=True):
                             p = p.split("/")[2] # ZTFid_date_inst_v.ascii
                             p = p.split("_")[2]
                             dat_inst.append(p)
-
-            if specfilter==False:
-            # Download all sources, and selectively choose which one will be used to SNID
-                for spectra_path in spec:
-                    list_spec.append(str(spectra_path['datapath'])) # append datapaths...
-                    return (list_spec)
 
         elif name != target_id:
             pass
@@ -401,6 +389,7 @@ def download_spectra(data_path, target_id, date_dir_name, dtype='no_header'):
     # GROWTH Marshall url where data is available
     download_url = "http://skipper.caltech.edu:8080/growth-data/"
 
+    # Complete path to url downloading data
     data_path_mod = data_path.split("/")[2].split('.')[0] #ZTFid_date_inst_vn
     print (data_path_mod)
     print ("prior")
@@ -415,9 +404,9 @@ def download_spectra(data_path, target_id, date_dir_name, dtype='no_header'):
         return (None)
 
     # Make a new directory with the ZTF name
-    bash1 = subprocess.run("mkdir ../%s/%s"%(date_dir_name, target_id), shell=True)
-    bash2 = subprocess.run("mkdir ../%s/%s/spectra"%(date_dir_name, target_id), shell=True) # create the spectra dir in the ZTF target dir
-    bash3 = subprocess.run("mkdir ../%s/%s/summary"%(date_dir_name, target_id), shell=True) # create the summary dir where we save summary SNID plots
+    bash1 = subprocess.run("mkdir data/%s/%s"%(date_dir_name, target_id), shell=True)
+    bash2 = subprocess.run("mkdir data/%s/%s/spectra"%(date_dir_name, target_id), shell=True) # create the spectra dir in the ZTF target dir
+    bash3 = subprocess.run("mkdir data/%s/%s/summary"%(date_dir_name, target_id), shell=True) # create the summary dir where we save summary SNID plots
 
     # Fetch data from custom url
     data = ascii.read("%s"%final_path_to_data, format=dtype)
@@ -431,7 +420,7 @@ def download_spectra(data_path, target_id, date_dir_name, dtype='no_header'):
         print ("Looking in wavelength ranges: %s - %s"%(min_lambda, max_lambda))
         # Save to data path: ../n1/spectra
         # Generally in this directory we will have: ".asii", ".output"
-        download_spectrum = ascii.write(data, "../%s/%s/spectra/%s.ascii"%(date_dir_name, target_id, data_path_mod), format=dtype)
+        download_spectrum = ascii.write(data, "data/%s/%s/spectra/%s.ascii"%(date_dir_name, target_id, data_path_mod), format=dtype)
         return (True)
     else:
         return (False)
@@ -814,48 +803,3 @@ def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
         #flag.write("%s "%target_id)
         #flag.close()
         #return (None)
-
-# -------- Beggin extrapolating code -----
-
-# Define user login credentials:
-user = input("Username: ")
-passw = getpass.getpass("Enter your password: ")
-
-# Where will the data be stored from this python run? format: month/day/year (i.e 07022019)
-dd = input("Create a new date-directory ")
-date_directory = "07302019"#input("Insert date directory (MdYr): ")
-
-# Define start-end dates for scanning in CLU
-start_date = "2019-08-01"#input("Start Date <yearr-month-day>: ") # 06-11-2018 - 12-01-2018 OK
-end_date = "2019-08-23"#input("End Date <yearr-month-date>: ")
-
-list_ztf_names = download_marshall_spectra(user, passw, start_date, end_date, date_directory)
-
-print ("ZTF target list for the given dates %s - %s have been generated..."%(start_date, end_date))
-
-for ZTF_target in list_ztf_names: # go through the list of targets manually!
-    print ("Now analyzing %s"%ZTF_target)
-
-    spec = fetch_ZTF_spectrum(ZTF_target, user, passw, specfilter=True) # spec filter is a local variable that contains all the information!
-    print ("spec results: %s"%spec)
-    # maybe chance spec to .ascii file instead?
-    # spec sometimes can be empy!
-    if spec==None: # if the spectrum is empty!
-        pass
-    else:
-        print ("Now downloading the spectra!")
-        ds = download_spectra(spec, ZTF_target, date_directory) # download spectrum
-        print (ds)
-        if ds==False:
-            print ("Failed downloading spectrum!")
-            snid = None # set SNID = None
-        elif ds==True:
-            print ("Now going to SNID data!")
-            snid = SNID_spectra(spec, ZTF_target, date_directory, user, passw, snid_args='rlapmin=5 fluxout=5 inter=0 plot=0')
-        if snid==True:
-            SNID_to_marshall(spec, ZTF_target, date_directory, user, passw)
-            print ('-------------')
-        elif snid==False:
-            pass
-        elif snid==None:
-            pass
