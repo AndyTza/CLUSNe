@@ -28,14 +28,15 @@ passw = getpass.getpass("Enter your password: ")
 date_directory= input("Create a new date-directory (MDYr): ")
 
 # choose what option to run
+print ("###### Welcome to CLUSne ######")
 print ("1. Single Source SNID & Posting")
 print ("2. N-Source Automated Source SNID & Posting")
 program_index = input("Select program [1,2]: ")
 
-if program_index==1:
+if float(program_index)==1:
     print ("test")
-    
-elif program_index==2:
+
+elif float(program_index)==2:
     # Define start-end dates for scanning in CLU
     start_date = input("Start Date <yearr-month-day>: ") # 06-11-2018 - 12-01-2018 OK
     end_date = input("End Date <yearr-month-date>: ")
