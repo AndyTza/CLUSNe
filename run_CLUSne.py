@@ -45,8 +45,13 @@ if float(program_index)==1:
 
     # Fetch & Download all spectra for the queried source
     spectra = snid.fetch_ZTF_spectrum(ZTF_target, user, passw, specfilter=False, program_idx=0) # NOTE: incorporate other programs such as RCF...
+
     for spec in spectra:
-        snid.download_spectra(spec, ZTF_target, date_directory)
+        spec_download = snid.download_spectra(spec, ZTF_target, date_directory) # download all spectra to data path
+        print (spec_download)
+        snid.SNID_spectra(spec_download, ZTF_target, date_directory, user, passw)
+
+
 
 
 

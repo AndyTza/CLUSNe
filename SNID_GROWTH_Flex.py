@@ -391,8 +391,6 @@ def download_spectra(data_path, target_id, date_dir_name, dtype='no_header'):
 
     # Complete path to url downloading data
     data_path_mod = data_path.split("/")[2].split('.')[0] #ZTFid_date_inst_vn
-    print (data_path_mod)
-    print ("prior")
 
     try:
         # Stich final directories to the directory containing the data
@@ -416,12 +414,13 @@ def download_spectra(data_path, target_id, date_dir_name, dtype='no_header'):
     min_lambda = min(data['col1']) # minimum wavelength
     max_lambda = max(data['col1'])# maximum wavelength
 
-    if min_lambda>2500 and max_lambda<12000:
+    if min_lambda>2500 and max_lambda<12000: # check that the downloaded ascii is within the optical range!
         print ("Looking in wavelength ranges: %s - %s"%(min_lambda, max_lambda))
         # Save to data path: ../n1/spectra
         # Generally in this directory we will have: ".asii", ".output"
         download_spectrum = ascii.write(data, "data/%s/%s/spectra/%s.ascii"%(date_dir_name, target_id, data_path_mod), format=dtype)
-        return (True)
+        stored_spectrum = "data/%s/%s/spectra/%s.ascii"%(date_dir_name, target_id, data_path_mod)
+        return (stored_spectrum)
     else:
         return (False)
 
@@ -472,7 +471,7 @@ def fetch_ztf_z(target_id, user, passw):
         elif name != target_id:
             pass
 
-def SNID_spectra(spec_list, target_id, date_dir_name, user, passw, snid_args="rlapmin=5 fluxout=5 inter=0 plot=0"):
+def SNID_spectra(path_to_data, target_id, date_dir_name, user, passw, snid_args="rlapmin=5 fluxout=5 inter=0 plot=0"):
     """Will run SNID on .ascii files saved at ../date_dir_name/ZTF_id/spectra
 
     Input
@@ -491,43 +490,37 @@ def SNID_spectra(spec_list, target_id, date_dir_name, user, passw, snid_args="rl
     SNID_prog = True # Snid progress, if true next steps will continue
 
     # File extension name (i.e ZTFid_date_inst_v.ascii)
-    file_ext = spec_list.split("/")[2]
+    file_ext = path_to_data.split("/")[4]
     print ("file ext: %s"%file_ext)
     instrument = file_ext.split("_")[2] # instrument name
 
     print ("This is your instrument name: %s"%instrument)
     if str(instrument)=="Keck2":
         SNID_prog = False
-        print ("Problematic spectra identified (outside of wavelength range!)")
-        flag = open('Flagged_spectra_%s.txt'%date_dir_name, 'a')
-        flag.write("%s " %target_id)
-        flag.close()
+        print ("Sorry I cannot process Keck2 spectra!")
         return (SNID_prog)
 
     # Final path to data
-    path_to_data = "../%s/%s/spectra/%s"%(date_dir_name, target_id, file_ext)
-    print ("path_to_data: %s"%path_to_data)
+    #path_to_data = "data/%s/%s/spectra/%s"%(date_dir_name, target_id, file_ext)
+    #print ("path_to_data: %s"%path_to_data)
 
     # Final path to directory (i.e ../date_dir_name/ZTF_id/spectra/)
-    path_to_save_dir = "../%s/%s/spectra/"%(date_dir_name, target_id)
+    path_to_save_dir = "data/%s/%s/spectra/"%(date_dir_name, target_id)
     print ("save path: %s"%path_to_save_dir)
 
     z = fetch_ztf_z(target_id, user, passw) # fetch Marshall redshift(z) and source-id
 
     print ('Now running SNID:  %s'%file_ext)
-    Bac1 = subprocess.check_output("snid %s forcez=%s emclip=%s %s"%(snid_args, z[0], z[0], path_to_data), shell=True)
+    Bac1 = subprocess.check_output("snid %s forcez=%s %s"%(snid_args, z[0], path_to_data), shell=True)
     Bac1_output = str(Bac1) # convert terminal output to string
     Bac1_output = np.asarray(Bac1_output.split('\\n')) # split
 
     snid_error_1 = np.where(Bac1_output==" Interactive mode off. No output written.")
     snid_error_2 = np.where(Bac1_output==" No peaks are good, setting z = 0.000.")
 
-    if len(snid_error_1[0])==1 or len(snid_error_2[0])==1 or str(instrument)=="Keck2":
+    if len(snid_error_1[0])==1 or len(snid_error_2[0])==1:
         SNID_prog = False
         print ("Problematic spectra identified, SNID had trouble running. Now adding to flagged spectra...")
-        flag = open('Flagged_spectra_%s.txt'%date_dir_name, 'a')
-        flag.write("%s " %target_id)
-        flag.close()
         return (SNID_prog)
     else:
         SNID_prog = True
