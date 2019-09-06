@@ -496,13 +496,10 @@ def SNID_spectra(path_to_data, target_id, date_dir_name, user, passw, snid_args=
 
     print ("This is your instrument name: %s"%instrument)
     if str(instrument)=="Keck2":
+        # We cannot run snid on IR spectra
         SNID_prog = False
         print ("Sorry I cannot process Keck2 spectra!")
         return (SNID_prog)
-
-    # Final path to data
-    #path_to_data = "data/%s/%s/spectra/%s"%(date_dir_name, target_id, file_ext)
-    #print ("path_to_data: %s"%path_to_data)
 
     # Final path to directory (i.e ../date_dir_name/ZTF_id/spectra/)
     path_to_save_dir = "data/%s/%s/spectra/"%(date_dir_name, target_id)
@@ -660,7 +657,7 @@ def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
     data_extension = spec_list.split("/")[2] # select only the file extension
     data_extension = data_extension.split("_")
 
-    if data_extension[2]=="Gemini":
+    if data_extension[2]=="Gemini" or "Lick":
         print ("Found Gemini!")
         extensions = data_extension[0:4] # Name, date, instrument
         v_s = data_extension[4].split(".")[0]
