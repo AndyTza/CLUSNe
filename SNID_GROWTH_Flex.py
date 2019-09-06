@@ -793,3 +793,9 @@ def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
         #flag.write("%s "%target_id)
         #flag.close()
         #return (None)
+
+def SNID_quality_check(path_to_data, target_id, date_dir_name):
+    """ This is a SNID filtering function. It will asses if the SNID fit
+    is a SN. Based on the .output file of the SNID fit, this funciton will decide
+    if the fit falls under the categories: 'Gal', 'Other', 'SN'
+    """

@@ -57,8 +57,20 @@ if float(program_index)==1:
         print (spec_download)
         snid.SNID_spectra(spec_download, ZTF_target, date_directory, user, passw) # Run SNID
 
+    # Loop through each .output file
+    Loop = subprocess.check_output("ls ../data/ZTF_target/spectra/*.output", shell=True)
+    loop_1 = str(Bac1) # convert terminal output to string
+    loop_2 = np.asarray(Bac1_output.split('\\n')) # split
+    print (loop_2)
+
     # Decide which fit is the best one
-    
+    #1) How many output files were dumped to the directory
+    #2) Load those output files
+    #3) Per-file, decide if it's url_good
+    #4) Build matrix with best fits
+
+
+
 
 
 
