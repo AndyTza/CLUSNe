@@ -17,6 +17,8 @@ import subprocess
 import logging
 import webbrowser
 from datetime import *
+import glob
+from os import listdir
 import os
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['text.latex.unicode'] = True
@@ -57,11 +59,17 @@ if float(program_index)==1:
         print (spec_download)
         snid.SNID_spectra(spec_download, ZTF_target, date_directory, user, passw) # Run SNID
 
+    out_files_path = glob.glob("data/%s/%s/spectra/*.output"%(date_directory, ZTF_target))
+
+
+
     # Loop through each .output file
-    Loop = subprocess.check_output("ls ../data/ZTF_target/spectra/*.output", shell=True)
-    loop_1 = str(Bac1) # convert terminal output to string
-    loop_2 = np.asarray(Bac1_output.split('\\n')) # split
-    print (loop_2)
+    #Loop = subprocess.check_output("ls data/%s/ZTF_target/spectra/"%date_directory, shell=True)
+    #loop_1 = str(Bac1) # convert terminal output to string
+    #print (loop_1)
+    #loop_2 = np.asarray(Bac1_output.split('\\n')) # split
+    #print (loop_2)
+    #print (loop_2)
 
     # Decide which fit is the best one
     #1) How many output files were dumped to the directory
