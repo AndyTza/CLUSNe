@@ -576,7 +576,7 @@ def upload_SNID_figure(spec_list, target_id, date_dir_name, user, passw, source_
                              auth=(user, passw), files=files, data=payload3)
     print ("Done uploading")
 
-def show_fits(spec_list, target_id, date_dir_name, user, passw, theta, comp_n=6, plot=True):
+def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=True):
     """ Show the TOP 3 SNID fits using Matplotlib.
 
     Input
@@ -593,8 +593,35 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, theta, comp_n=6,
     """
 
     # Extract file extension
-    data_extension = spec_list.split("/")[2] # select only the file extension
-    data_extension = data_extension.split("_")
+    data_ext = spec_list.split("/")[4] # ZTFid_date_inst_v...
+    dat_rmv_acii = data_ext.split(".ascii")
+    data_extension = data_ext.split("_")
+
+    # Define theta:
+    spec_output_data = load_snid_output("data/%s/%s/spectra/%s_snid.output"%(date_dir_name, target_id, dat_rmv_acii[0]))
+    # First define local variables and store as theta!
+
+    sne_name = spec_output_data['sn'] # load Sne template name SNID
+    rlap = np.asarray(spec_output_data['rlap']) # load rlap score from SNID
+    rlap = rlap.astype(float) # conver to float
+    rlap = rlap[~np.isnan(rlap)]
+
+    z = np.asarray(spec_output_data['z']) # load z score
+    z = z.astype(float)
+    z = z[~np.isnan(z)]
+
+    z_err = spec_output_data['zerr'] # load z_err
+
+    age = np.asarray(spec_output_data['age']) # load age
+    age = age.astype(float)
+    age = age[~np.isnan(age)]
+
+    sne_type = spec_output_data['type'] # load sne_tpe
+    sne_type = np.asanyarray(sne_type)
+
+    theta = [sne_name, sne_type, z, z_err, rlap, age] # defined theta
+
+    #print (theta[0], theta[1][i], theta[2][i], theta[3][i], theta[5][i])
 
     if data_extension[2]=="Gemini":
         print ("Found Gemini!")
@@ -603,23 +630,23 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, theta, comp_n=6,
         extensions.append(v_s)
         comp = ["comp000%s"%i for i in range(1,comp_n)] # generate comp_list (for SNID templates)
         # Define path_to_output... where to find the output SNID file
-        comp_path = ["../%s/%s/spectra/%s_%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3],extensions[4], comp[i]) for i in range(0, len(comp))]
-        data_path = "../%s/%s/spectra/%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3], extensions[4])
+        comp_path = ["data/%s/%s/spectra/%s_%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3],extensions[4], comp[i]) for i in range(0, len(comp))]
+        data_path = "data/%s/%s/spectra/%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3], extensions[4])
     else:
         extensions = data_extension[0:3] # Name, date, instrument
         v_s = data_extension[3].split(".")[0]
         extensions.append(v_s)
         comp = ["comp000%s"%i for i in range(1,comp_n)] # generate comp_list (for SNID templates)
         print (comp)
-        comp_path = ["../%s/%s/spectra/%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3], comp[i]) for i in range(0, len(comp))]
-        data_path = "../%s/%s/spectra/%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3])
+        comp_path = ["data/%s/%s/spectra/%s_%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3], comp[i]) for i in range(0, len(comp))]
+        data_path = "data/%s/%s/spectra/%s_%s_%s_%s_snidflux.dat"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3])
 
     #print (data_path)
     data = ascii.read(data_path) # load SNID spectrum data
     data_lambda = data['wavelength[A]']
     data_flux = data['flux[arbitraty]']
     #plot = input("Display plot [y/n]: ")
-    _, ax = plt.subplots(nrows=comp_n-3, ncols=1, figsize=(18, 28))
+    _, ax = plt.subplots(nrows=comp_n-3, ncols=1, figsize=(10,5))
     print ("Now going to display plot")
 
     for i in range (0, len(comp_path)-2):
@@ -627,17 +654,15 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, theta, comp_n=6,
         data_temp = ascii.read(comp_path[i])
 
         ax[i].plot(data_lambda, data_flux, color='k', lw=2, label='data')
-        ax[i].plot(data_temp['col1'], data_temp['col2'], color='red', label="SNe:%s (%s) z:%s+/-%s rlap:%s"%(theta[0][i], theta[1][i], theta[2][i], theta[3][i], theta[5][i]))
-        ax[i].set_xlabel(r'Wavelength [Å]', fontsize=30)
-        ax[i].set_ylabel('Normalized Flux', fontsize=30)
+        ax[i].plot(data_temp['col1'], data_temp['col2'], color='red')#, label="SNe:%s (%s) z:%s+/-%s rlap:%s age:%s"%(theta[0][i], theta[1][i], theta[2][i], theta[3][i], theta[5][i]))
+        ax[i].set_xlabel(r'Wavelength [Å]', fontsize=5)
+        ax[i].set_ylabel('Normalized Flux', fontsize=5)
         ax[i].legend(fontsize=23)
         ax[i].set_xlim(4000, 9000)
-        ax[i].tick_params(axis = 'both', which = 'major', labelsize = 25, direction='in', length=10)
-        plt.savefig('../%s/%s/summary/%s_%s_%s_%s_summary.jpg'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')
-    #if plot=="y":
-    #    plt.show()
-    #elif plot=="n":
-    #    pass
+        ax[i].tick_params(axis = 'both', which = 'major', labelsize = 5, direction='in', length=5)
+        plt.savefig('data/%s/%s/summary/%s_%s_%s_%s_summary.pdf'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')
+
+    os.system("evince data/%s/%s/summary/%s_%s_%s_%s_summary.pdf"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]))
 
 def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
     """ Take the SNID fit, decide if it was a good fit, and upload to the marshall.

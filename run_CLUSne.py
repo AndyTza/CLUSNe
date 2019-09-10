@@ -25,11 +25,11 @@ matplotlib.rcParams['text.latex.unicode'] = True
 import SNID_GROWTH_Flex as snid
 
 # Define user login credentials:
-user = input("Username: ")
-passw = getpass.getpass("Enter your password: ")
+user = "AndyTzanidakis"#input("Username: ")
+passw = "Kepler314**"#getpass.getpass("Enter your password: ")
 
 # Where will the data be stored from this python run? format: month/day/year (i.e 07022019)
-date_directory= input("Create a new date-directory (i.e 07202019): ")
+date_directory= "09102019"#input("Create a new date-directory (i.e 07202019): ")
 mkdir_date_dir = os.system("mkdir data/%s"%date_directory) # make a new directory where we will store the datapath
 
 # Chose what program you want to run
@@ -59,7 +59,7 @@ if float(program_index)==1:
         print (spec_download)
         snid.SNID_spectra(spec_download, ZTF_target, date_directory, user, passw) # Run SNID
 
-    out_files_path = glob.glob("data/%s/%s/spectra/*.output"%(date_directory, ZTF_target))
+    out_files_path = glob.glob("data/%s/%s/spectra/*.ascii"%(date_directory, ZTF_target))
 
     display_menu=True
     while display_menu==True:
@@ -73,20 +73,19 @@ if float(program_index)==1:
             temp_1.append(j[0]) # which number on the menu
             temp_2.append(j[1]) # which output file
 
-        mo = input("Please select the spectrum number you would like to display [spec # or q]: ")
+        menu_choice = input("Please select the spectrum number you would like to display [spec # or q]: ")
 
-        if mo=='q':
+        if menu_choice=='q':
             display_menu=False
         else:
             try:
-                idx_mo = float(mo)
-                print ("Great you have selected:")
-                print (temp_1)
-                print (temp_25)
-                print (temp_2[mo])
-                print ("_____")
+                print ("Great you have selected : %s"%temp_2[int(mo)].split("/")[4])
             except :
                 pass
+
+            file_plot = temp_2[int(menu_choice)] #data/date/ZTF_id/spectrum/.ascii
+            snid.show_fits(file_plot, ZTF_target, date_directory, user, passw)
+
 
             continue
 
