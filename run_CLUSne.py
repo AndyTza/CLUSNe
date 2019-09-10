@@ -61,27 +61,37 @@ if float(program_index)==1:
 
     out_files_path = glob.glob("data/%s/%s/spectra/*.output"%(date_directory, ZTF_target))
 
+    display_menu=True
+    while display_menu==True:
+        print ("Display the output SNID fits!")
 
+        for i in enumerate(out_files_path):
+            print ("%s) %s"%(i[0], i[1].split("/")[4])) # show the available outputs
 
-    # Loop through each .output file
-    #Loop = subprocess.check_output("ls data/%s/ZTF_target/spectra/"%date_directory, shell=True)
-    #loop_1 = str(Bac1) # convert terminal output to string
-    #print (loop_1)
-    #loop_2 = np.asarray(Bac1_output.split('\\n')) # split
-    #print (loop_2)
-    #print (loop_2)
+        temp_1, temp_2 = [], []
+        for j in enumerate(out_files_path):
+            temp_1.append(j[0]) # which number on the menu
+            temp_2.append(j[1]) # which output file
 
-    # Decide which fit is the best one
-    #1) How many output files were dumped to the directory
-    #2) Load those output files
-    #3) Per-file, decide if it's url_good
-    #4) Build matrix with best fits
+        mo = input("Please select the spectrum number you would like to display [spec # or q]: ")
 
+        if mo=='q':
+            display_menu=False
+        else:
+            try:
+                idx_mo = float(mo)
+                print ("Great you have selected:")
+                print (temp_1)
+                print (temp_25)
+                print (temp_2[mo])
+                print ("_____")
+            except :
+                pass
 
+            continue
 
-
-
-
+        if display_menu==False: # quit the forloop
+            break
 
 
 
