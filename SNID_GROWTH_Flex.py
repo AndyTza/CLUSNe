@@ -621,7 +621,7 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=T
 
     theta = [sne_name, sne_type, z, z_err, rlap, age] # defined theta
 
-    #print (theta[0], theta[1][i], theta[2][i], theta[3][i], theta[5][i])
+    #print (theta[0], theta[1], theta[2], theta[3], theta[4])
 
     if data_extension[2]=="Gemini":
         print ("Found Gemini!")
@@ -646,18 +646,26 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=T
     data_lambda = data['wavelength[A]']
     data_flux = data['flux[arbitraty]']
     #plot = input("Display plot [y/n]: ")
-    _, ax = plt.subplots(nrows=comp_n-3, ncols=1, figsize=(10,5))
+    _, ax = plt.subplots(nrows=comp_n-3, ncols=1, figsize=(9,7))
     print ("Now going to display plot")
 
     for i in range (0, len(comp_path)-2):
         # Load tempalte data
         data_temp = ascii.read(comp_path[i])
 
+        # Tweak headers
+        if theta[0][i]=='rlap':
+            theta[0][i]="None"
+
+        if theta[1][i]=="cutoff" or theta[1][i]=="typename":
+            theta[1][i]="None"
+
         ax[i].plot(data_lambda, data_flux, color='k', lw=2, label='data')
-        ax[i].plot(data_temp['col1'], data_temp['col2'], color='red')#, label="SNe:%s (%s) z:%s+/-%s rlap:%s age:%s"%(theta[0][i], theta[1][i], theta[2][i], theta[3][i], theta[5][i]))
-        ax[i].set_xlabel(r'Wavelength [Å]', fontsize=5)
-        ax[i].set_ylabel('Normalized Flux', fontsize=5)
-        ax[i].legend(fontsize=23)
+        ax[i].plot(data_temp['col1'], data_temp['col2'], color='red',
+         label="SNe:%s (%s) z:%s+/-%s rlap:%s age:%s"%(theta[0][i], theta[1][i], theta[2][i], theta[3][i], theta[4][i], theta[5][i]))
+        ax[i].set_xlabel(r'Wavelength [Å]', fontsize=7)
+        ax[i].set_ylabel('Normalized Flux', fontsize=7)
+        ax[i].legend(fontsize=8)
         ax[i].set_xlim(4000, 9000)
         ax[i].tick_params(axis = 'both', which = 'major', labelsize = 5, direction='in', length=5)
         plt.savefig('data/%s/%s/summary/%s_%s_%s_%s_summary.pdf'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')

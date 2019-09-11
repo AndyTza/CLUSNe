@@ -37,7 +37,7 @@ print ("###### Welcome to CLUSne ######")
 print ("1. Single Source SNID & Posting")
 print ("2. N-Source Automated Source SNID & Posting")
 
-program_index = input("Select program [1,2]: ")
+program_index = "1"#input("Select program [1,2]: ")
 
 # Single source posting and SNID program
 if float(program_index)==1:
@@ -45,7 +45,7 @@ if float(program_index)==1:
     print ("You have selected single source SNID & Commenting!")
 
     try:
-        ZTF_target = input("Input ZTF name: ") # define ZTF name
+        ZTF_target = "ZTF19abwsecm"#input("Input ZTF name: ") # define ZTF name
         # Fetch & Download all spectra for the queried source
         spectra = snid.fetch_ZTF_spectrum(ZTF_target, user, passw, specfilter=False, program_idx=0) # NOTE: incorporate other programs such as RCF...
     except:
