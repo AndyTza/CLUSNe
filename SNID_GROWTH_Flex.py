@@ -24,6 +24,8 @@ matplotlib.rcParams['text.latex.unicode'] = True
 # ABOUT: SNID_GROWTH_Flex.py will be used to impliment a new feature where for N>1 spectra, we query all -- and find for which one does med_rlap have the highest score
 # Author: Anastasios Tzanidakis (atzanida@caltech.edu)
 
+# Write a function to list all programs available
+
 def download_marshall_spectra(user, passw, start_date, end_date, date_dir_name):
     """Fetch list of all ZTF targets with spectra within a given time period.
 
@@ -673,8 +675,8 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=T
         ax[i].legend(fontsize=8)
         ax[i].set_xlim(4000, 9000)
         ax[i].tick_params(axis = 'both', which = 'major', labelsize = 5, direction='in', length=5)
-        plt.savefig('data/%s/%s/summary/%s_%s_%s_%s_summary.pdf'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')
-    #plt.show()
+        #plt.savefig('data/%s/%s/summary/%s_%s_%s_%s_summary.pdf'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')
+    plt.show()
     #os.system("evince data/%s/%s/summary/%s_%s_%s_%s_summary.pdf"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]))
 
 def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):

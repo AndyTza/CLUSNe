@@ -33,11 +33,13 @@ date_directory= "09102019"#input("Create a new date-directory (i.e 07202019): ")
 mkdir_date_dir = os.system("mkdir data/%s"%date_directory) # make a new directory where we will store the datapath
 
 # Chose what program you want to run
-print ("###### Welcome to CLUSne ######")
+print (" ")
+print ("###### Welcome to CLUSNe ######")
 print ("1. Single Source SNID & Posting")
 print ("2. N-Source Automated Source SNID & Posting")
+print ("3. List my Programs")
 
-program_index = "1"#input("Select program [1,2]: ")
+program_index = "0"#input("Select program [1,2]: ")
 
 # Single source posting and SNID program
 if float(program_index)==1:
@@ -85,7 +87,6 @@ if float(program_index)==1:
 
             file_plot = temp_2[int(menu_choice)] #data/date/ZTF_id/spectrum/.ascii
             snid.show_fits(file_plot, ZTF_target, date_directory, user, passw)
-
 
             continue
 
