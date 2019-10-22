@@ -106,6 +106,7 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=False, program_idx=0):
             photometry_info = sourceDict['uploaded_photometry'] # information on photometry
 
             N_spec = len(spec) # number of available spectra! -- check for uniqueness? [NOTE!]
+            print ("Number of available spectra for %s : %s"%(name, N_spec))
 
             if specfilter==False: # Download all available spectra!
                 for spectra_path in spec:
@@ -117,10 +118,11 @@ def fetch_ZTF_spectrum(target_id, user, passw, specfilter=False, program_idx=0):
                     # empty spectrum!
                     print ("Found empty spectrum!")
                     return (None)
+
             # Fetch the spectrum that will be the easisest to classify by +/- 7 days of max light
                 if N_spec==1: # only one spectrum available
                     for spectra_path in spec:
-                        print ("Only one spectrum found... Skipping N=1 spectra for now...")
+                        print ("Only one spectrum found...")
                         datapath = str(spectra_path['datapath'])
                         ext = datapath.split("/")[2].split(".")[1]
                         if ext=="fits":
@@ -519,6 +521,9 @@ def SNID_spectra(path_to_data, target_id, date_dir_name, user, passw, snid_args=
     if len(snid_error_1[0])==1 or len(snid_error_2[0])==1:
         SNID_prog = False
         print ("Problematic spectra identified, SNID had trouble running. Now adding to flagged spectra...")
+        flag = open('failed_SNID_ia.txt', 'a')
+        flag.write("%s,"%target_id)
+        flag.close()
         return (SNID_prog)
     else:
         SNID_prog = True
@@ -623,7 +628,7 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=T
 
     #print (theta[0], theta[1], theta[2], theta[3], theta[4])
 
-    if data_extension[2]=="Gemini":
+    if data_extension[2]=="Gemini" or data_extension[2]=="Lick" :
         print ("Found Gemini!")
         extensions = data_extension[0:4] # Name, date, instrument
         v_s = data_extension[4].split(".")[0]
@@ -669,8 +674,8 @@ def show_fits(spec_list, target_id, date_dir_name, user, passw, comp_n=6, plot=T
         ax[i].set_xlim(4000, 9000)
         ax[i].tick_params(axis = 'both', which = 'major', labelsize = 5, direction='in', length=5)
         plt.savefig('data/%s/%s/summary/%s_%s_%s_%s_summary.pdf'%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]), bbox_inches='tight')
-
-    os.system("evince data/%s/%s/summary/%s_%s_%s_%s_summary.pdf"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]))
+    #plt.show()
+    #os.system("evince data/%s/%s/summary/%s_%s_%s_%s_summary.pdf"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3]))
 
 def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
     """ Take the SNID fit, decide if it was a good fit, and upload to the marshall.
@@ -828,8 +833,77 @@ def SNID_to_marshall(spec_list, target_id, date_dir_name, user, passw):
         #flag.close()
         #return (None)
 
-def SNID_quality_check(path_to_data, target_id, date_dir_name):
-    """ This is a SNID filtering function. It will asses if the SNID fit
-    is a SN. Based on the .output file of the SNID fit, this funciton will decide
-    if the fit falls under the categories: 'Gal', 'Other', 'SN'
+def SNID_fit_check(spec_list, target_id, date_dir_name, user, passw):
+    """ Take the SNID fit, decide if it was a good fit, and upload to the marshall.
+
+    Input
+    ------
+    target_id: ZTF name of source (str)
+    date_dir_name: daving date directory you will be storing the downloaded files (str)
+    user: Username for login cridentials for GROWTH Marshall (str)
+    passw: Password for login cridentials for GROWTH Marshall (str)
+
+    Output
+    ------
+    Extrapolate data from SNID.output, view TOP3 SNID.output fits, view summary statistics, post to GROWTH Marshall
     """
+    print ("Now reading SNID output!")
+
+    ########## Define Local Variables from the output file ##############
+    data_ext = spec_list.split("/")[4] # data/date/ZTF/spectra/ZTFid_date_inst_v... : you are selecting just the name
+
+    dat_rmv_acii = data_ext.split(".ascii") # this is just ZTF_date_instrument_v
+
+    data_extension = data_ext.split("_") # list of all the extentions {ZTF, date, inst, v}
+    print (data_extension)
+    print ("This is the instrument I found: %s"%data_extension[2])
+
+    if data_extension[2] == "Gemini" or data_extension[2] =="Lick":
+        print ("Found Gemini or Lick!")
+        extensions = data_extension[0:4] # Name, date, instrument
+        v_s = data_extension[4].split(".")[0]
+        extensions.append(v_s)
+        # Define path_to_output... where to find the output SNID file
+        path_to_output = "data/%s/%s/spectra/%s_%s_%s_%s_%s_snid.output"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3], extensions[4])
+    else:
+        print ("Normal case")
+        extensions = data_extension[0:3] # Name, date, instrument
+        v_s = data_extension[3].split(".")[0]
+        extensions.append(v_s)
+        path_to_output = "data/%s/%s/spectra/%s_%s_%s_%s_snid.output"%(date_dir_name, extensions[0], extensions[0], extensions[1], extensions[2], extensions[3])
+
+    # Load SNID output file
+    spec_output_data = load_snid_output(path_to_output) # Pandas frame
+
+    sne_name = spec_output_data['sn'] # load Sne template name SNID
+    rlap = np.asarray(spec_output_data['rlap']) # load rlap score from SNID
+    rlap = rlap.astype(float) # conver to float
+    rlap = rlap[~np.isnan(rlap)]
+
+    z = np.asarray(spec_output_data['z']) # load z score
+    z = z.astype(float)
+    z = z[~np.isnan(z)]
+
+    z_err = spec_output_data['zerr'] # load z_err
+
+    age = np.asarray(spec_output_data['age']) # load age
+    age = age.astype(float)
+    age = age[~np.isnan(age)]
+
+    sne_type = spec_output_data['type'] # load sne_tpe
+    sne_type = np.asanyarray(sne_type)
+
+    sne_type_trim = sne_type[0:3] # TOP 3 fits
+    sne_name_trim = sne_name[0:3]
+    age_trim = age[0:3]
+    z_trim = z[0:3]
+    rlap_trim = rlap[0:3]
+
+    print ("#################################")
+    print ("SN type summary: %s"%sne_type_trim)
+    print ("SN rlap summary: %s"%rlap_trim)
+    print ("SN z summary: %s"%z_trim)
+    print ("SN age summary: %s"%age_trim)
+    print ("#################################")
+
+    return (sne_type_trim)
