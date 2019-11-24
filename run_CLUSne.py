@@ -25,8 +25,8 @@ matplotlib.rcParams['text.latex.unicode'] = True
 import SNID_GROWTH_Flex as snid
 
 # Define user login credentials:
-user = "AndyTzanidakis"#input("Username: ")
-passw = "Kepler314**"#getpass.getpass("Enter your password: ")
+user = input("Username: ")
+passw = getpass.getpass("Enter your password: ")
 
 # Where will the data be stored from this python run? format: month/day/year (i.e 07022019)
 date_directory= "09102019"#input("Create a new date-directory (i.e 07202019): ")
